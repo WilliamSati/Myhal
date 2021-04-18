@@ -12,7 +12,7 @@ HRESULT recordPlayAudio(IMMDevice* microphone, IMMDevice* speaker) {
     WAVEFORMATEX* pwfx = NULL;
 
     //initialize microphone audioClient
-    IAudioClient* microphoneAudioClient = initializeIAudioClient(microphone, NULL);
+    IAudioClient* microphoneAudioClient = initializeIAudioClient(microphone, &pwfx);
     if (microphoneAudioClient == NULL) {
         return E_FAIL;
     }
@@ -24,7 +24,7 @@ HRESULT recordPlayAudio(IMMDevice* microphone, IMMDevice* speaker) {
     }
 
     //initialize speaker audio client with microphone's mix format.
-    IAudioClient* speakerAudioClient = initializeIAudioClient(speaker, pwfx);
+    IAudioClient* speakerAudioClient = initializeIAudioClient(speaker, &pwfx);
     if (speakerAudioClient == NULL) {
         return E_FAIL;
     }

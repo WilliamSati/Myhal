@@ -7,7 +7,7 @@
 
 
 //create an IAudioClient interface to allow application to interact with enpoint device.
-IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX* pwfx) {
+IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** pwfx) {
     IAudioClient* pAudioClient = NULL;
 
     HRESULT hr = endpointDevice->Activate(
@@ -22,9 +22,9 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX* pw
 
     //get the format to be used to initialize the endpoint
     WAVEFORMATEX* ppClosestMatch;
-    if (pwfx == NULL) {
+    if (*pwfx == NULL) {
         //get the audio format the endpoint is storing the audio in
-        hr = pAudioClient->GetMixFormat(&pwfx);
+        hr = pAudioClient->GetMixFormat(pwfx);
         if (hr != S_OK) {
             std::cout << "\nSomething went wrong when getting the IAudioClient format.\n";
             ErrorDescription(hr);
@@ -35,7 +35,7 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX* pw
     else {
         hr = pAudioClient->IsFormatSupported(
             AUDCLNT_SHAREMODE_SHARED,
-            pwfx,
+            *pwfx,
             &ppClosestMatch
         );
         if (hr != S_OK) {
@@ -67,7 +67,7 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX* pw
         0,
         REFTIMES_PER_SEC,
         0,
-        pwfx,
+        *pwfx,
         NULL);
     if (hr != S_OK) {
         std::cout << "\nSomething went wrong when initializing the AudioClient.\n";
