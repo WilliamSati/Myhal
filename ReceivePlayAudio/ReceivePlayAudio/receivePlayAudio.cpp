@@ -67,13 +67,13 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> timeElapsed = now - start;
-    std::chrono::duration<double, std::milli> maxTime(15000);//5 seconds
+    std::chrono::duration<double, std::milli> maxTime(150000);//5 seconds
 
     struct sockaddr messageSource;
     int messageSourceSize = sizeof(messageSource);
 
 
-    while (timeElapsed < maxTime) {
+    while (1) {
 
         // See how much buffer space is available.
         hr = speakerAudioClient->GetCurrentPadding(&numFramesPaddingS);
