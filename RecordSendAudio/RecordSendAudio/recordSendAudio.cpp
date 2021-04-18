@@ -87,7 +87,7 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
     UINT32 numFramesWritten = NULL;
     int iResult;
 
-    while (timeElapsed < maxTime) {
+    while (1) {
 
         hr = microphoneCaptureClient->GetNextPacketSize(&packetLength);
         if (hr != S_OK) {
@@ -119,9 +119,6 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
             iResult = sendto(socket, (const char*) microphoneData, (int)strlen((const char*)microphoneData), 0, (struct sockaddr*)&si_other, slen);
             if (iResult == SOCKET_ERROR) {
                 printf("send failed: %d\n", WSAGetLastError());
-                closesocket(socket);
-                WSACleanup();
-                return E_FAIL;
             }
 
             numFramesWritten = iResult / pwfx->nBlockAlign;

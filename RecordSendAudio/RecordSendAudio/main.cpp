@@ -28,7 +28,7 @@ int main()
         return 1;
     }
 
-    status = recordSendAudio(microphone,"127.0.0.1");
+    status = recordSendAudio(microphone,"10.0.0.158");
     std::cout << "done!";
     return status;
 }
