@@ -4,5 +4,5 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdio.h>
-SOCKET createSocket(PCSTR address);
+SOCKET createClientSocket();
 #endif

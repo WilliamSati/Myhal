@@ -1,9 +1,4 @@
-#include "errorHandling.h"
-#include "listers.h"
-#include "receivePlayAudio.h"
-#include <iostream>
-#include <Mmdeviceapi.h>
-
+#include "mainHeaders.h"
 
 int main()
 {

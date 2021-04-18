@@ -6,7 +6,7 @@
 #include <Mmdeviceapi.h>
 #include <audioclient.h>
 
-IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX* pwfx);
+IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** pwfx);
 IMMDevice* getDefaultEndpointDevice(EDataFlow dataFlow);
 
 #endif

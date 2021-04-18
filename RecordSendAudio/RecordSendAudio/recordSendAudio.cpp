@@ -3,7 +3,7 @@
 
 #ifndef REFTIMES_PER_SEC
 #define REFTIMES_PER_SEC 10000000 // number of 100 nanoseconds per second
-#define DEFAULT_PORT "27015"
+#define DEFAULT_PORT 27015
 #endif
 
 
@@ -12,7 +12,7 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
     WAVEFORMATEX* pwfx = NULL;
 
     //initialize microphone audioClient
-    IAudioClient* microphoneAudioClient = initializeIAudioClient(microphone, NULL);
+    IAudioClient* microphoneAudioClient = initializeIAudioClient(microphone, &pwfx);
     if (microphoneAudioClient == NULL) {
         return E_FAIL;
     }
@@ -34,9 +34,21 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
         return hr;
     }
 
-    SOCKET ConnectSocket = createSocket(address);
-    if (ConnectSocket == INVALID_SOCKET) {
+    SOCKET socket = createClientSocket();
+    if (socket == INVALID_SOCKET) {
         std::cout << "\nCouldn't create or connect the socket.\n";
+        return E_FAIL;
+    }
+
+    struct sockaddr_in si_other;
+    int slen = sizeof(si_other);
+    //setup address structure
+    memset((char*)&si_other, 0, sizeof(si_other));
+    si_other.sin_family = AF_INET;
+    si_other.sin_port = htons(DEFAULT_PORT);
+    int inetResult = inet_pton(AF_INET, address, &si_other.sin_addr.S_un.S_addr);
+    if (inetResult !=  1) {
+        std::cout << "\nCouldn't convert ip address.\n";
         return E_FAIL;
     }
 
@@ -72,6 +84,8 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
     std::chrono::duration<double, std::milli> maxTime(15000);//5 seconds
 
     double avPacketLength;
+    UINT32 numFramesWritten = NULL;
+    int iResult;
 
     while (timeElapsed < maxTime) {
 
@@ -101,18 +115,16 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
                 microphoneData = NULL;  // Tell CopyData to write silence.
             }
 
-
-            UINT32 numFramesWritten;
-            int iResult;
-
             // Send an initial buffer
-            iResult = send(ConnectSocket, (const char*) microphoneData, (int)strlen((const char*)microphoneData), 0);
+            iResult = sendto(socket, (const char*) microphoneData, (int)strlen((const char*)microphoneData), 0, (struct sockaddr*)&si_other, slen);
             if (iResult == SOCKET_ERROR) {
                 printf("send failed: %d\n", WSAGetLastError());
-                closesocket(ConnectSocket);
+                closesocket(socket);
                 WSACleanup();
                 return E_FAIL;
             }
+
+            numFramesWritten = iResult / pwfx->nBlockAlign;
 
             hr = microphoneCaptureClient->ReleaseBuffer(numFramesWritten);
             if (hr != S_OK) {
@@ -136,16 +148,16 @@ HRESULT recordSendAudio(IMMDevice* microphone, PCSTR address) {
 
     // shutdown the connection for sending since no more data will be sent
     // the client can still use the ConnectSocket for receiving data
-    int iResult = shutdown(ConnectSocket, SD_SEND);
+    iResult = shutdown(socket, SD_SEND);
     if (iResult == SOCKET_ERROR) {
         printf("shutdown failed: %d\n", WSAGetLastError());
-        closesocket(ConnectSocket);
+        closesocket(socket);
         WSACleanup();
         return E_FAIL;
     }
 
     // cleanup
-    closesocket(ConnectSocket);
+    closesocket(socket);
     WSACleanup();
 
     return hr;

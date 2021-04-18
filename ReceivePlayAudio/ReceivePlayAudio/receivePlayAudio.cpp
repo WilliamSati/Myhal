@@ -15,7 +15,7 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
 
 
     //initialize speaker audio client with microphone's mix format.
-    IAudioClient* speakerAudioClient = initializeIAudioClient(speaker, pwfx);
+    IAudioClient* speakerAudioClient = initializeIAudioClient(speaker, &pwfx);
     if (speakerAudioClient == NULL) {
         return E_FAIL;
     }
@@ -32,31 +32,11 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
     }
 
     //create a server socket
-    SOCKET listenSocket = createServerSocket();
-    if (listenSocket == INVALID_SOCKET) {
+    SOCKET socket = createServerSocket();
+    if (socket == INVALID_SOCKET) {
         std::cout << "\nCouldn't create the listening socket\n";
         return E_FAIL;
     }
-
-    //wait for client to request a connection
-    if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
-        printf("Listen failed with error: %ld\n", WSAGetLastError());
-        closesocket(listenSocket);
-        WSACleanup();
-        return E_FAIL;
-    }
-
-    SOCKET ClientSocket = INVALID_SOCKET;
-
-    // Accept a client socket
-    ClientSocket = accept(listenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
-        printf("accept failed: %d\n", WSAGetLastError());
-        closesocket(listenSocket);
-        WSACleanup();
-        return E_FAIL;
-    }
-
 
     // Start playing.
     hr = speakerAudioClient->Start();
@@ -89,6 +69,10 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
     std::chrono::duration<double, std::milli> timeElapsed = now - start;
     std::chrono::duration<double, std::milli> maxTime(15000);//5 seconds
 
+    struct sockaddr messageSource;
+    int messageSourceSize = sizeof(messageSource);
+
+
     while (timeElapsed < maxTime) {
 
         // See how much buffer space is available.
@@ -108,7 +92,7 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
             return hr;
         }
 
-        int iResult = recv(ClientSocket, (char*)speakerBufferStart, numFramesAvailableS * pwfx->nBlockAlign, 0);
+        int iResult = recvfrom(socket, (char*)speakerBufferStart, numFramesAvailableS * pwfx->nBlockAlign, 0, &messageSource, &messageSourceSize);
         if (iResult == SOCKET_ERROR) {
             std::cout << "\nSomething went wrong receiving data from client. error code: " << WSAGetLastError();
             return E_FAIL;
@@ -122,7 +106,6 @@ HRESULT receivePlayAudio(IMMDevice* speaker) {
             ErrorDescription(hr);
             return hr;
         }
-
 
         now = std::chrono::high_resolution_clock::now();
         timeElapsed = now - start;
