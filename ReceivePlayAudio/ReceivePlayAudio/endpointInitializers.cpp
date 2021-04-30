@@ -64,7 +64,7 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** p
     //initialize the audio client with 1 second buffer.
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        0,
+        AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
         REFTIMES_PER_SEC,
         0,
         *pwfx,
