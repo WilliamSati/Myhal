@@ -19,11 +19,9 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** p
         return NULL;
     }
 
-
-    WAVEFORMATEX* ppClosestMatch;
-    //get the format to be used to initialize the endpoint
+    //get the audioformat to be used by both endpoints
     if (*pwfx == NULL) {
-        //get the audio format the endpoint is storing the audio in
+        //get the format to be used to initialize the endpoint
         hr = pAudioClient->GetMixFormat(pwfx);
         if (hr != S_OK) {
             std::cout << "\nSomething went wrong when getting the IAudioClient format.\n";
@@ -31,19 +29,7 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** p
             return NULL;
         }
     }
-    //if required to initialize in a specific format, 
-    else {
-        hr = pAudioClient->IsFormatSupported(
-            AUDCLNT_SHAREMODE_SHARED,
-            *pwfx,
-            &ppClosestMatch
-        );
-        if (hr != S_OK) {
-            std::cout << "\nFormat not supported.\n";
-            ErrorDescription(hr);
-            return NULL;
-        }
-    }
+    
 
     //get the period of the endpoint buffer
     REFERENCE_TIME phnsDefaultDevicePeriod = 1;
@@ -64,7 +50,7 @@ IAudioClient* initializeIAudioClient(IMMDevice* endpointDevice, WAVEFORMATEX** p
     //initialize the audio client with 1 second buffer.
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
+        AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
         REFTIMES_PER_SEC,
         0,
         *pwfx,
